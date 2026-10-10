@@ -115,16 +115,20 @@ src/
     DeleteEventButton.tsx  delete with a confirmation step
     LoginForm.tsx          login form
     SignupForm.tsx         sign-up form
+    StatusMessage.tsx      big status code, title, message and buttons, used by the error pages
     ui.ts                  shared button, input and card styles
   app/
     layout.tsx             page shell used by every page
     globals.css            colours and fonts
     page.tsx               home: list of events with filters
+    not-found.tsx          404 page for any unknown address
+    error.tsx              page shown when something unexpected fails
     login/page.tsx         login page
     signup/page.tsx        sign-up page
     events/new/page.tsx            create an event (admin)
     events/[id]/page.tsx           event details, participants for admin
     events/[id]/edit/page.tsx      edit an event (admin)
+    events/[id]/not-found.tsx      404 page for an event that does not exist
     api/                           the REST API, see section 6
 ```
 
@@ -247,7 +251,23 @@ The second request then counts again, sees the event is full, and is refused.
 
 The first three are done by the database (`buildWhere`). "Places left" is done in code after the query, because it compares a column with a count.
 
-## 10. Colours
+## 10. Error pages
+
+Next.js picks these files up by their name; nothing has to be wired manually.
+
+| File | Shown when | Text |
+|---|---|---|
+| `src/app/not-found.tsx` | The address matches no page | "Page not found" |
+| `src/app/events/[id]/not-found.tsx` | The event id in the address does not exist; the event pages call `notFound()` | "Event not found" |
+| `src/app/error.tsx` | Something unexpected fails while rendering a page, for example the database is unreachable | "Something went wrong", with a "Try again" button |
+
+All three use the `StatusMessage` component, so they share one design: the status code in large UM6P orange, a title, a short explanation and a button back to the events. They are rendered inside the normal layout, so the header stays visible.
+
+The 404 pages still answer with the HTTP status 404, which is what browsers and search engines expect.
+
+`error.tsx` must be a client component; that is a Next.js rule, because it has to catch errors in the browser too.
+
+## 11. Colours
 
 All colours are defined once, in `src/app/globals.css`, and used everywhere through Tailwind class names such as `bg-brand` or `text-muted`. Changing a value there changes it across the whole site.
 
@@ -266,7 +286,7 @@ All colours are defined once, in `src/app/globals.css`, and used everywhere thro
 
 The UM6P logo itself uses a slightly brighter orange, `#ea3b15`; the site's buttons and links use `#d4451e`, which is the one adopted here.
 
-## 11. Dates and time zones
+## 12. Dates and time zones
 
 - The database stores dates in UTC.
 - Dates are displayed in Morocco time (`Africa/Casablanca`), set in `src/lib/format.ts`.
@@ -274,14 +294,14 @@ The UM6P logo itself uses a slightly brighter orange, `#ea3b15`; the site's butt
 
 Known limitation: the form assumes the browser is on Morocco time. Someone creating an event from another time zone would see the displayed time shifted. The From / To filters use UTC days, so an event between midnight and 1 am Morocco time is counted on the previous day.
 
-## 12. Tests
+## 13. Tests
 
 Run with `npm test`. They need no database.
 
 - `src/lib/rules.test.ts`: remaining places, full event, past event, double registration, lowering capacity.
 - `src/lib/validation.test.ts`: valid and invalid events, sign-up input, filters.
 
-## 13. Commands
+## 14. Commands
 
 | Command | What it does |
 |---|---|
@@ -295,7 +315,7 @@ Run with `npm test`. They need no database.
 | `npm run db:deploy` | Apply existing migrations to a database (production) |
 | `npm run db:seed` | Create the admin account and sample events |
 
-## 14. Environment variables
+## 15. Environment variables
 
 Stored in `.env`, which is never committed. `.env.example` lists them without real values.
 
@@ -307,7 +327,7 @@ Stored in `.env`, which is never committed. `.env.example` lists them without re
 | `ADMIN_EMAIL` | Email of the admin created by the seed |
 | `ADMIN_PASSWORD` | Password of the admin created by the seed |
 
-## 15. How it was verified
+## 16. How it was verified
 
 On 10 October 2026 the application was run against the Neon database and every feature was exercised through the API with temporary accounts, which were deleted afterwards.
 
@@ -327,7 +347,7 @@ On 10 October 2026 the application was run against the Neon database and every f
 
 Not verified: the visual appearance of the pages in a browser.
 
-## 16. Status
+## 17. Status
 
 | Step | State |
 |---|---|

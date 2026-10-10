@@ -28,7 +28,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col font-sans">
         <Header />
-        <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+        <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 sm:px-6">
           {children}
         </main>
       </body>
