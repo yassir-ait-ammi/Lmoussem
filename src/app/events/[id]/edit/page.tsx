@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation";
+import { forbidden, notFound, redirect } from "next/navigation";
 import EventForm from "@/components/EventForm";
 import { card } from "@/components/ui";
 import { AppError } from "@/lib/errors";
@@ -25,7 +25,7 @@ export default async function EditEventPage({ params }: Props) {
   const { id } = await params;
   const user = await getCurrentUser();
   if (!user) redirect(`/login?next=/events/${id}/edit`);
-  if (user.role !== "ADMIN") redirect("/");
+  if (user.role !== "ADMIN") forbidden();
 
   const event = await loadEvent(id);
 

@@ -52,6 +52,7 @@ Two things were deliberately left out because they were not approved: a linter (
 - **Auth.js is a beta version (5.0.0-beta.32).** Version 5 is the one designed for the Next.js App Router, and it has not left beta. Its version is pinned exactly so an update cannot change behaviour by surprise.
 - **Cache Components are turned off** in `next.config.ts`. The Next.js generator enables this caching feature by default, but every page here depends on who is logged in and on live registration counts, so pages are rendered fresh on each request.
 - **`allowScripts` in `package.json`.** Recent npm versions do not run a package's install script unless it is approved. Prisma needs its script to download its database engine, so its three packages are listed there.
+- **`experimental.authInterrupts`** in `next.config.ts` enables the `forbidden()` function used for the "Access denied" page (see the Error pages section).
 - **`agentRules: false`** in `next.config.ts` stops Next.js from generating an `AGENTS.md` file each time the development server starts.
 - **`postinstall: prisma generate`.** Prisma generates typed code from the schema. Running it after every install means it also runs on Vercel.
 
@@ -122,6 +123,7 @@ src/
     globals.css            colours and fonts
     page.tsx               home: list of events with filters
     not-found.tsx          404 page for any unknown address
+    forbidden.tsx          403 page for a logged-in user who is not an admin
     error.tsx              page shown when something unexpected fails
     login/page.tsx         login page
     signup/page.tsx        sign-up page
@@ -259,11 +261,22 @@ Next.js picks these files up by their name; nothing has to be wired manually.
 |---|---|---|
 | `src/app/not-found.tsx` | The address matches no page | "Page not found" |
 | `src/app/events/[id]/not-found.tsx` | The event id in the address does not exist; the event pages call `notFound()` | "Event not found" |
+| `src/app/forbidden.tsx` | A logged-in user without the admin role opens an admin page; those pages call `forbidden()` | "Access denied" |
 | `src/app/error.tsx` | Something unexpected fails while rendering a page, for example the database is unreachable | "Something went wrong", with a "Try again" button |
 
-All three use the `StatusMessage` component, so they share one design: the status code in large UM6P orange, a title, a short explanation and a button back to the events. They are rendered inside the normal layout, so the header stays visible.
+All four use the `StatusMessage` component, so they share one design: the status code in large UM6P orange, a title, a short explanation and a button back to the events. They are rendered inside the normal layout, so the header stays visible.
 
-The 404 pages still answer with the HTTP status 404, which is what browsers and search engines expect.
+The 404 pages still answer with the HTTP status 404, and the "Access denied" page with 403, which is what browsers and search engines expect.
+
+What each kind of visitor gets on an admin page (`/events/new`, `/events/:id/edit`):
+
+| Visitor | Result | Why |
+|---|---|---|
+| Not logged in | Redirected to `/login`, then sent back to the page after logging in | They may well be an admin who has not logged in yet |
+| Logged in as a normal user | "Access denied" page, status 403 | Logging in again would not help; they simply lack the right |
+| Logged in as admin | The page | |
+
+`forbidden()` is a Next.js feature still marked experimental, so it is switched on with `experimental.authInterrupts` in `next.config.ts`.
 
 `error.tsx` must be a client component; that is a Next.js rule, because it has to catch errors in the browser too.
 
@@ -343,7 +356,7 @@ On 10 October 2026 the application was run against the Neon database and every f
 | Three users registering at the same instant for one place | One 201, two 409 |
 | Register for a past event | 409 |
 | Filters: text, place, date range, places left, no match | Correct lists |
-| Pages as visitor / user / admin | Admin pages redirect non-admins; unknown event gives 404 |
+| Pages as visitor / user / admin | Admin pages redirect visitors to login and give users a 403; unknown event gives 404 |
 
 Not verified: the visual appearance of the pages in a browser.
 
