@@ -237,7 +237,8 @@ The second request then counts again, sees the event is full, and is refused.
 - **Admin account**: created by the seed script from `ADMIN_EMAIL` and `ADMIN_PASSWORD` in `.env`.
 - **Login**: `LoginForm` calls `signIn("credentials")`. Auth.js runs the `authorize` function in `src/auth.ts`, which finds the user by email and compares the password with the stored hash.
 - **Session**: on success, Auth.js stores a signed, encrypted token (JWT) in an HTTP-only cookie. The token contains the user id and role. It is signed with `AUTH_SECRET`, so it cannot be forged or modified.
-- **Reading the session**: `getCurrentUser()` in `session.ts`. `requireUser()` and `requireAdmin()` throw an `AppError` (401 or 403) when the condition is not met.
+- **Reading the session**: `getCurrentUser()` in `session.ts`. It reads the user id from the cookie, then loads that user from the database. If the account no longer exists, the visitor is treated as a guest. `requireUser()` and `requireAdmin()` throw an `AppError` (401 or 403) when the condition is not met.
+- **Why the database is checked on every request**: the cookie alone stays valid for 30 days, even if the account behind it is deleted or the database is reset. Checking the database means a deleted account loses access immediately, and a change of name or role takes effect at once. The cost is one small query per request; React's `cache()` makes sure it runs only once even when the header and the page both ask for the user.
 - **Protection happens on the server.** Hiding the Edit button from a normal user is only for comfort; the real protection is `requireAdmin()` inside the API routes and the redirect at the top of the admin pages.
 
 ## 9. Search and filters

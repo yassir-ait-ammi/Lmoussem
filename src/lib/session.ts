@@ -1,5 +1,7 @@
+import { cache } from "react";
 import { auth } from "@/auth";
 import { AppError } from "./errors";
+import { prisma } from "./prisma";
 
 export type SessionUser = {
   id: string;
@@ -8,17 +10,16 @@ export type SessionUser = {
   role: "ADMIN" | "USER";
 };
 
-export async function getCurrentUser(): Promise<SessionUser | null> {
+export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const session = await auth();
-  const user = session?.user;
-  if (!user?.id || !user.email) return null;
-  return {
-    id: user.id,
-    name: user.name ?? user.email,
-    email: user.email,
-    role: user.role,
-  };
-}
+  const id = session?.user?.id;
+  if (!id) return null;
+
+  return prisma.user.findUnique({
+    where: { id },
+    select: { id: true, name: true, email: true, role: true },
+  });
+});
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getCurrentUser();
