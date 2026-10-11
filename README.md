@@ -15,7 +15,10 @@ Not deployed yet. The demonstration URL will be added here.
 | Register a participant | A logged-in user registers for an event and can cancel |
 | Capacity control | Registration is refused when the event is full, already passed, or already joined |
 | Authentication | Sign-up and login with two roles: Admin and User |
-| Search and filters | By text, place, date range, and "places left" |
+| Search and filters | By text, place, date range, and "places left", applied automatically as you type or change a field |
+| Instant feedback | Registering updates the button, the "Registered" badge and the capacity bar at once |
+| Loading states | Skeleton placeholders while the pages and the filtered list load |
+| Show / hide password | Eye button in the login and sign-up forms |
 | Participants list | An administrator sees who registered for each event |
 
 ## Technologies
@@ -160,6 +163,7 @@ Errors share one format: `{ "error": { "code", "message", "fields" } }`.
 - **The last place cannot be taken twice.** Registration runs in a database transaction that locks the event row, so two simultaneous requests cannot both get the final place.
 - **The registered count is never stored.** It is counted from the registrations, so it cannot drift.
 - **Capacity cannot be lowered below the number of people already registered.**
-- **Filters live in the URL**, so a filtered list can be bookmarked and shared.
+- **Filters live in the URL**, so a filtered list can be bookmarked and shared, and they apply automatically (the search waits for a short pause while typing).
+- **Registration feels instant.** The new state is shown as soon as the server confirms it, while the page data refreshes in the background.
 
 A complete walkthrough of the project is in [DOCUMENTATION.md](DOCUMENTATION.md).

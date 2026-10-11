@@ -109,19 +109,26 @@ src/
   components/
     Header.tsx             top bar, shows login state and log out
     EventCard.tsx          one event in the list
+    EventList.tsx          count, "New event" button and grid of cards for the current filters
+    EventListSkeleton.tsx  grey placeholder of the list, shown while it loads
+    Skeleton.tsx           one pulsing grey block, the brick of every skeleton
     CapacityBar.tsx        "12 / 50 registered" bar
-    EventFilters.tsx       search and filter form
+    EventFilters.tsx       search and filter form, applied automatically
+    FiltersSection.tsx     loads the places and renders EventFilters
+    RegistrationProvider.tsx  shared registration state of one event: button, badge and capacity bar
     EventForm.tsx          create and edit form
     RegisterButton.tsx     register / cancel registration
     DeleteEventButton.tsx  delete with a confirmation step
     LoginForm.tsx          login form
     SignupForm.tsx         sign-up form
+    PasswordInput.tsx      password field with a show / hide eye button
     StatusMessage.tsx      big status code, title, message and buttons, used by the error pages
     ui.ts                  shared button, input and card styles
   app/
     layout.tsx             page shell used by every page
     globals.css            colours and fonts
-    page.tsx               home: list of events with filters
+    page.tsx               home: filters and list of events
+    loading.tsx            skeleton of the home page while it loads
     not-found.tsx          404 page for any unknown address
     forbidden.tsx          403 page for a logged-in user who is not an admin
     error.tsx              page shown when something unexpected fails
@@ -129,6 +136,7 @@ src/
     signup/page.tsx        sign-up page
     events/new/page.tsx            create an event (admin)
     events/[id]/page.tsx           event details, participants for admin
+    events/[id]/loading.tsx        skeleton of the event page while it loads
     events/[id]/edit/page.tsx      edit an event (admin)
     events/[id]/not-found.tsx      404 page for an event that does not exist
     api/                           the REST API, see section 6
@@ -138,10 +146,10 @@ src/
 
 Next.js has two kinds of components:
 
-- **Server components** (the default) run on the server only. They can read the database directly. Pages, `Header`, `EventCard`, `EventFilters` and `CapacityBar` are server components.
-- **Client components** start with `"use client"` and also run in the browser. They are needed for anything interactive: forms with state and buttons with click handlers. `EventForm`, `RegisterButton`, `DeleteEventButton`, `LoginForm` and `SignupForm` are client components.
+- **Server components** (the default) run on the server only. They can read the database directly. Pages, `Header`, `EventCard`, `EventList` and `FiltersSection` are server components.
+- **Client components** start with `"use client"` and also run in the browser. They are needed for anything interactive: forms with state and buttons with click handlers. `EventFilters`, `EventForm`, `RegisterButton`, `RegistrationProvider`, `DeleteEventButton`, `LoginForm`, `SignupForm` and `PasswordInput` are client components.
 
-After a client component changes data through the API, it calls `router.refresh()`, which asks the server to render the page again with fresh data.
+After a client component changes data through the API, it calls `router.refresh()`, which asks the server to render the page again with fresh data. Because that refresh takes a moment, registration shows its result immediately in the meantime (see section 12).
 
 ## 5. Database
 
@@ -239,11 +247,26 @@ The second request then counts again, sees the event is full, and is refused.
 - **Session**: on success, Auth.js stores a signed, encrypted token (JWT) in an HTTP-only cookie. The token contains the user id and role. It is signed with `AUTH_SECRET`, so it cannot be forged or modified.
 - **Reading the session**: `getCurrentUser()` in `session.ts`. It reads the user id from the cookie, then loads that user from the database. If the account no longer exists, the visitor is treated as a guest. `requireUser()` and `requireAdmin()` throw an `AppError` (401 or 403) when the condition is not met.
 - **Why the database is checked on every request**: the cookie alone stays valid for 30 days, even if the account behind it is deleted or the database is reset. Checking the database means a deleted account loses access immediately, and a change of name or role takes effect at once. The cost is one small query per request; React's `cache()` makes sure it runs only once even when the header and the page both ask for the user.
+- **Show / hide password**: `PasswordInput` (used by the login and sign-up forms) puts an eye button inside the field. The eye is open while the password is visible and slashed while it is hidden. The button is `type="button"`, so it never submits the form, and it has an `aria-label` for screen readers.
 - **Protection happens on the server.** Hiding the Edit button from a normal user is only for comfort; the real protection is `requireAdmin()` inside the API routes and the redirect at the top of the admin pages.
 
 ## 9. Search and filters
 
-`EventFilters` is a plain HTML form using the GET method, so the filters go in the URL (`/?q=pitch&place=Rabat&available=1`). The result can be bookmarked and shared, and it needs no JavaScript.
+`EventFilters` is a client component. The filters go in the URL (`/?q=pitch&place=Rabat&available=1`), so the result can be bookmarked and shared, and the form is still a plain GET form that works without JavaScript.
+
+The filters are **applied automatically**, there is no Apply button:
+
+| Field | When it applies | How |
+|---|---|---|
+| Place, From, To, "places left" | Immediately on change | `router.push`, so Back returns to the previous filters |
+| Search | 350 ms after the last keystroke, or at once on Enter | `router.replace`, so typing does not fill the browser history |
+| Reset | On click | Clears every field and goes back to `/` |
+
+Details that make this comfortable:
+
+- The page is split so that the filter form stays mounted while results reload: `page.tsx` puts `FiltersSection` and `EventList` in two `Suspense` boundaries, and only the list one is keyed by the filters. The search field therefore keeps its focus while the list shows its skeleton.
+- While the new results load, a small spinner and "Updating..." appear next to Reset (`useTransition`), and the form is marked `aria-busy`.
+- A `useEffect` keeps the fields in sync with the URL after Back / Forward or Reset, without overwriting the field being typed in.
 
 | Filter | URL parameter | How it is applied |
 |---|---|---|
@@ -281,7 +304,34 @@ What each kind of visitor gets on an admin page (`/events/new`, `/events/:id/edi
 
 `error.tsx` must be a client component; that is a Next.js rule, because it has to catch errors in the browser too.
 
-## 11. Colours
+## 11. Loading states
+
+The pages read from a remote database, so a navigation or a filter change takes a moment. Instead of leaving the old page frozen, grey skeleton placeholders show the shape of what is coming.
+
+| File | Shown when |
+|---|---|
+| `src/app/loading.tsx` | The home page loads (title, filter box and a grid of placeholder cards) |
+| `src/app/events/[id]/loading.tsx` | An event page loads |
+| `Suspense` fallback in `src/app/page.tsx` | The filters change: only the count and grid are replaced by `EventListSkeleton`, the filter form stays |
+
+Next.js picks `loading.tsx` up by its name. `Skeleton` is one pulsing block (`animate-pulse`); the skeletons are built from it and use the same card styles as the real pages, so nothing jumps when the data arrives. Login and sign-up have no loading page: they have no server data to wait for, and their buttons already show "Logging in..." and "Creating account...".
+
+## 12. Instant feedback when registering
+
+After a click on Register or Cancel, three things on the page depend on the result: the button, the "Registered" badge and the capacity bar. The real data only arrives after `router.refresh()`, which needs another round-trip to the database, so without care the old state stayed visible for a moment.
+
+`RegistrationProvider` (a client component wrapping each event card and the event page) holds the state of one event in a React context and is read by `RegisterButton`, `RegisteredBadge` and `LiveCapacityBar`:
+
+1. The user clicks. The button shows "Registering..." (or "Cancelling...").
+2. When the API confirms, the provider shows the new state at once: the registered flag flips and the count moves by one, so the badge, the "N / capacity" text, the "places left" label and the bar all change together.
+3. `router.refresh()` runs in the background. When the refreshed props agree with the shown state, the provider goes back to using the server values.
+4. If the request fails, nothing is shown as changed and the error message appears under the button.
+
+The server stays the source of truth: the shown state is only a short-lived preview of an answer the server has already confirmed.
+
+Each of the two buttons has its own `key`. Without it React reuses the same `<button>` element, and the `transition-colors` of the button style made the color fade from orange to white and back.
+
+## 13. Colours
 
 All colours are defined once, in `src/app/globals.css`, and used everywhere through Tailwind class names such as `bg-brand` or `text-muted`. Changing a value there changes it across the whole site.
 
@@ -300,7 +350,7 @@ All colours are defined once, in `src/app/globals.css`, and used everywhere thro
 
 The UM6P logo itself uses a slightly brighter orange, `#ea3b15`; the site's buttons and links use `#d4451e`, which is the one adopted here.
 
-## 12. Dates and time zones
+## 14. Dates and time zones
 
 - The database stores dates in UTC.
 - Dates are displayed in Morocco time (`Africa/Casablanca`), set in `src/lib/format.ts`.
@@ -308,14 +358,14 @@ The UM6P logo itself uses a slightly brighter orange, `#ea3b15`; the site's butt
 
 Known limitation: the form assumes the browser is on Morocco time. Someone creating an event from another time zone would see the displayed time shifted. The From / To filters use UTC days, so an event between midnight and 1 am Morocco time is counted on the previous day.
 
-## 13. Tests
+## 15. Tests
 
 Run with `npm test`. They need no database.
 
 - `src/lib/rules.test.ts`: remaining places, full event, past event, double registration, lowering capacity.
 - `src/lib/validation.test.ts`: valid and invalid events, sign-up input, filters.
 
-## 14. Commands
+## 16. Commands
 
 | Command | What it does |
 |---|---|
@@ -329,7 +379,7 @@ Run with `npm test`. They need no database.
 | `npm run db:deploy` | Apply existing migrations to a database (production) |
 | `npm run db:seed` | Create the admin account and sample events |
 
-## 15. Environment variables
+## 17. Environment variables
 
 Stored in `.env`, which is never committed. `.env.example` lists them without real values.
 
@@ -341,7 +391,7 @@ Stored in `.env`, which is never committed. `.env.example` lists them without re
 | `ADMIN_EMAIL` | Email of the admin created by the seed |
 | `ADMIN_PASSWORD` | Password of the admin created by the seed |
 
-## 16. How it was verified
+## 18. How it was verified
 
 On 10 October 2026 the application was run against the Neon database and every feature was exercised through the API with temporary accounts, which were deleted afterwards.
 
@@ -359,9 +409,9 @@ On 10 October 2026 the application was run against the Neon database and every f
 | Filters: text, place, date range, places left, no match | Correct lists |
 | Pages as visitor / user / admin | Admin pages redirect visitors to login and give users a 403; unknown event gives 404 |
 
-Not verified: the visual appearance of the pages in a browser.
+Not verified: the visual appearance of the pages in a browser, including the loading skeletons, the automatic filters and the instant registration feedback added afterwards (checked with the type-check only).
 
-## 17. Status
+## 19. Status
 
 | Step | State |
 |---|---|
