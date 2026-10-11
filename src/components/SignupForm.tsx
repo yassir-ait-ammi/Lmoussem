@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { apiRequest } from "@/lib/client";
+import PasswordInput from "./PasswordInput";
 import { buttonPrimary, fieldError, formError, input, label } from "./ui";
 
 type Props = {
@@ -95,13 +96,11 @@ export default function SignupForm({ next }: Props) {
         <label htmlFor="password" className={label}>
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="new-password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className={input}
+          onChange={setPassword}
         />
         {errors.password && <p className={fieldError}>{errors.password}</p>}
       </div>

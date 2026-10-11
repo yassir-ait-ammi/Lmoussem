@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
+import PasswordInput from "./PasswordInput";
 import { buttonPrimary, formError, input, label } from "./ui";
 
 type Props = {
@@ -64,13 +65,11 @@ export default function LoginForm({ next }: Props) {
         <label htmlFor="password" className={label}>
           Password
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="current-password"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className={input}
+          onChange={setPassword}
         />
       </div>
 
