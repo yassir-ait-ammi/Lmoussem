@@ -3,9 +3,13 @@ import type { EventSummary } from "@/lib/events";
 import { formatDay, formatEventDate, formatMonth } from "@/lib/format";
 import { isPast } from "@/lib/rules";
 import type { SessionUser } from "@/lib/session";
-import CapacityBar from "./CapacityBar";
 import DeleteEventButton from "./DeleteEventButton";
 import RegisterButton from "./RegisterButton";
+import {
+  LiveCapacityBar,
+  RegisteredBadge,
+  RegistrationProvider,
+} from "./RegistrationProvider";
 import { buttonSecondary, card } from "./ui";
 
 type Props = {
@@ -17,6 +21,11 @@ export default function EventCard({ event, user }: Props) {
   const past = isPast(event.date, new Date());
 
   return (
+    <RegistrationProvider
+      isRegistered={event.isRegistered}
+      registeredCount={event.registeredCount}
+      capacity={event.capacity}
+    >
     <article className={`flex flex-col gap-4 p-5 ${card}`}>
       <div className="flex items-start gap-4">
         <div className="flex w-14 shrink-0 flex-col items-center rounded-xl bg-brand-soft py-2 text-brand-strong">
@@ -40,11 +49,7 @@ export default function EventCard({ event, user }: Props) {
                 Past
               </span>
             )}
-            {event.isRegistered && (
-              <span className="rounded-full bg-ok-soft px-2 py-0.5 text-xs font-medium text-ok">
-                Registered
-              </span>
-            )}
+            <RegisteredBadge />
           </div>
           <p className="mt-1 text-sm text-muted">
             {formatEventDate(event.date)} · {event.place}
@@ -54,18 +59,12 @@ export default function EventCard({ event, user }: Props) {
 
       <p className="line-clamp-3 text-sm text-ink/80">{event.description}</p>
 
-      <CapacityBar
-        capacity={event.capacity}
-        registeredCount={event.registeredCount}
-        remaining={event.remaining}
-      />
+      <LiveCapacityBar />
 
       <div className="mt-auto flex flex-wrap items-start gap-2">
         <RegisterButton
           eventId={event.id}
           isLoggedIn={user !== null}
-          isRegistered={event.isRegistered}
-          isFull={event.remaining === 0}
           isPast={past}
         />
         {user?.role === "ADMIN" && (
@@ -78,5 +77,6 @@ export default function EventCard({ event, user }: Props) {
         )}
       </div>
     </article>
+    </RegistrationProvider>
   );
 }

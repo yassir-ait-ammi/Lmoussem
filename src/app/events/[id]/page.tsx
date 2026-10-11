@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import CapacityBar from "@/components/CapacityBar";
 import DeleteEventButton from "@/components/DeleteEventButton";
 import RegisterButton from "@/components/RegisterButton";
+import {
+  LiveCapacityBar,
+  RegisteredBadge,
+  RegistrationProvider,
+} from "@/components/RegistrationProvider";
 import { buttonSecondary, card } from "@/components/ui";
 import { AppError } from "@/lib/errors";
 import { getEvent, listParticipants } from "@/lib/events";
@@ -37,6 +41,11 @@ export default async function EventPage({ params }: Props) {
         ← All events
       </Link>
 
+      <RegistrationProvider
+        isRegistered={event.isRegistered}
+        registeredCount={event.registeredCount}
+        capacity={event.capacity}
+      >
       <article className={`flex flex-col gap-5 p-6 sm:p-8 ${card}`}>
         <div>
           <div className="flex flex-wrap items-center gap-2">
@@ -46,11 +55,7 @@ export default async function EventPage({ params }: Props) {
                 Past
               </span>
             )}
-            {event.isRegistered && (
-              <span className="rounded-full bg-ok-soft px-2 py-0.5 text-xs font-medium text-ok">
-                Registered
-              </span>
-            )}
+            <RegisteredBadge />
           </div>
           <p className="mt-2 text-sm text-muted">
             {formatEventDate(event.date)} (Morocco time) · {event.place}
@@ -59,18 +64,12 @@ export default async function EventPage({ params }: Props) {
 
         <p className="whitespace-pre-line text-ink/90">{event.description}</p>
 
-        <CapacityBar
-          capacity={event.capacity}
-          registeredCount={event.registeredCount}
-          remaining={event.remaining}
-        />
+        <LiveCapacityBar />
 
         <div className="flex flex-wrap items-start gap-2">
           <RegisterButton
             eventId={event.id}
             isLoggedIn={user !== null}
-            isRegistered={event.isRegistered}
-            isFull={event.remaining === 0}
             isPast={past}
           />
           {isAdmin && (
@@ -83,6 +82,7 @@ export default async function EventPage({ params }: Props) {
           )}
         </div>
       </article>
+      </RegistrationProvider>
 
       {isAdmin && (
         <section className={`p-6 sm:p-8 ${card}`}>
