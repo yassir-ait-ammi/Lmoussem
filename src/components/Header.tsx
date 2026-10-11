@@ -20,7 +20,7 @@ export default async function Header() {
             href="/"
             className="flex items-center gap-2 text-lg font-semibold tracking-tight text-brand"
           >
-            <Image src="/logo.png" alt="" width={36} height={36} priority className="size-9" />
+            <Image src="/logo.png" alt="" width={36} height={36} priority unoptimized className="size-9" />
             Lmoussem
           </Link>
           <nav className="flex items-center gap-4 text-sm text-muted">
