@@ -4,7 +4,9 @@ A mini event-management module: browse events, register for them, and manage the
 
 ## Demo
 
-Not deployed yet. The demonstration URL will be added here.
+Live application: **https://lmoussem.vercel.app/**
+
+The application runs on Vercel and uses a hosted Neon PostgreSQL database. Anyone can sign up for a normal user account; the administrator account is created by the seed script.
 
 ## Features
 

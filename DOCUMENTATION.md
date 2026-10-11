@@ -19,7 +19,7 @@ The original brief is in `requirement.txt` (kept out of Git by `.gitignore`).
 | Front-end | Register a participant | Required | `RegisterButton` |
 | Bonus | Simple authentication (Admin / User) | In scope | `src/auth.ts`, `src/lib/session.ts` |
 | Bonus | Search and filters | In scope | `EventFilters`, `buildWhere` in `src/lib/events.ts` |
-| Bonus | Deployment with a demo URL | In scope | Vercel (not done yet) |
+| Bonus | Deployment with a demo URL | Done | Vercel, https://lmoussem.vercel.app/ |
 | Deliverable | Source code on GitHub | Required | `github.com/yassir-ait-ammi/Lmoussem` |
 | Deliverable | README | Required | `README.md` |
 
@@ -426,6 +426,6 @@ Not verified: the visual appearance of the pages in a browser, including the loa
 | Back-end, authentication, filters | Verified through the API |
 | Front-end pages | Rendering; appearance not yet checked in a browser |
 | Admin account | Waiting for `ADMIN_PASSWORD` in `.env`, then `npm run db:seed` |
-| README | Done, demo URL to add |
-| GitHub repository | Exists, latest work not yet pushed |
-| Deployment on Vercel | Not started |
+| README | Done, with the demo URL |
+| GitHub repository | Exists, github.com/yassir-ait-ammi/Lmoussem |
+| Deployment on Vercel | Done, https://lmoussem.vercel.app/ |
