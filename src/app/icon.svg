@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Brand Orange Base -->
+  <rect width="64" height="64" rx="16" fill="#d4451e" />
+  
+  <!-- Geometric Arch M in Theme Off-White -->
+  <path d="M16 48 V 23 L26 35 L32 27 L38 35 L48 23 V 48 H41 V 34 L34 43 H30 L23 34 V 48 Z" fill="#faf7f2" />
+  
+  <!-- Gathering Star Marker -->
+  <circle cx="32" cy="15" r="3.5" fill="#faf7f2" />
+</svg>

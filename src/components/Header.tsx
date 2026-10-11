@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "@/auth";
 import { getCurrentUser } from "@/lib/session";
@@ -15,7 +16,11 @@ export default async function Header() {
     <header className="border-b border-line bg-card">
       <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-brand">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-lg font-semibold tracking-tight text-brand"
+          >
+            <Image src="/logo.png" alt="" width={36} height={36} priority className="size-9" />
             Lmoussem
           </Link>
           <nav className="flex items-center gap-4 text-sm text-muted">
